@@ -25,7 +25,19 @@ def fetch_call_data():
     }
 
     response = requests.get(url, headers=headers, params=params)
-    data = response.json()
+    
+    # Добавим проверку кода состояния
+    if response.status_code != 200:
+        print(f"Ошибка HTTP: {response.status_code}")
+        print(f"Ответ сервера: {response.text}")
+        return
+    
+    try:
+        data = response.json()
+    except requests.exceptions.JSONDecodeError as e:
+        print(f"Ошибка декодирования JSON: {e}")
+        print(f"Ответ сервера: {response.text}")
+        return
 
     if 'error' in data:
         print(f"Ошибка в ответе API: {data['error']}")
