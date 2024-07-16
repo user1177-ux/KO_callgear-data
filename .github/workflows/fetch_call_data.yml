@@ -3,7 +3,7 @@ name: Fetch and Update Call Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'  # Ежедневное выполнение в полночь по UTC
+    - cron: '00 14 * * *'  # 14:00 по UTC
 
 jobs:
   fetch-call-data:
