@@ -1,49 +1,65 @@
 import requests
-import json
 import csv
 import os
+import json
 from datetime import datetime
 
 def fetch_call_data():
     api_key = os.getenv('CALLGEAR_API_KEY')
     account_id = os.getenv('CALLGEAR_ACCOUNT_ID')
 
-    # Установка URL для получения данных
-    url = f'https://api.callgear.com/v1/accounts/{account_id}/calls'
+    if not api_key or not account_id:
+        print("CALLGEAR_API_KEY или CALLGEAR_ACCOUNT_ID не установлены")
+        return
 
-    # Параметры запроса
+    url = f'https://api.callgear.com/v2/calls'
+    headers = {
+        'Authorization': f'Bearer {api_key}',
+        'Content-Type': 'application/json'
+    }
     params = {
-        'api_key': api_key,
-        'date_from': '2020-01-01T00:00:00',  # Начальная дата для получения всех данных
-        'date_to': datetime.now().isoformat(),  # Конечная дата - текущая дата
-        'status': 'all'  # Получение всех звонков
+        'account_id': account_id,
+        'from': '2022-01-01',
+        'to': datetime.now().strftime('%Y-%m-%d')
     }
 
-    # Выполнение запроса
-    response = requests.get(url, params=params)
+    response = requests.get(url, headers=headers, params=params)
+    data = response.json()
 
-    # Проверка статуса ответа
-    if response.status_code == 200:
-        data = response.json()
-        calls = data.get('calls', [])
+    if 'error' in data:
+        print(f"Ошибка в ответе API: {data['error']}")
+        return
 
-        # Создание CSV файла
-        with open('call_data.csv', 'w', newline='') as csvfile:
-            fieldnames = ['date', 'incoming_calls', 'missed_calls', 'answered_calls']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
+    if 'data' not in data:
+        print("Ответ API не содержит ключ 'data'")
+        print("Полный ответ:", data)
+        return
 
-            for call in calls:
-                writer.writerow({
-                    'date': call.get('startTime'),
-                    'incoming_calls': call.get('incoming', 0),
-                    'missed_calls': call.get('missed', 0),
-                    'answered_calls': call.get('answered', 0)
-                })
+    result = []
+    for call in data['data']:
+        result.append({
+            'Дата': call.get('startTime'),
+            'Кол-во входящих звонков': call.get('incoming'),
+            'Кол-во пропущенных звонков': call.get('missed'),
+            'Кол-во принятых звонков': call.get('answered')
+        })
 
-        print("Данные успешно экспортированы в call_data.csv")
+    if result:
+        print(f"Запись {len(result)} записей в файл")
+        keys = result[0].keys()
+        file_path = 'call_data.csv'
+        with open(file_path, 'w', newline='') as output_file:
+            dict_writer = csv.DictWriter(output_file, fieldnames=keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(result)
+        
+        # Добавляем метку времени в конец файла, чтобы GitHub видел изменения
+        with open(file_path, 'a') as f:
+            f.write(f"\n# Last updated: {datetime.now().isoformat()}\n")
+        
+        print("Данные успешно экспортированы в", file_path)
     else:
-        print(f"Ошибка при выполнении запроса: {response.status_code} - {response.text}")
+        print("Нет данных для экспорта")
 
 if __name__ == "__main__":
     fetch_call_data()
