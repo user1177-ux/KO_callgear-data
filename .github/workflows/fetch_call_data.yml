@@ -1,0 +1,47 @@
+name: Fetch and Update Call Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'  # Ежедневное выполнение в полночь по UTC
+
+jobs:
+  fetch-call-data:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Run fetch call data script
+      run: python fetch_call_data.py
+      env:
+        CALLGEAR_API_KEY: ${{ secrets.CALLGEAR_API_KEY }}
+
+    - name: Check if CSV file exists and is not empty
+      run: |
+        if [ ! -s call_data.csv ]; then
+          echo "call_data.csv is empty"
+          exit 1
+        fi
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add call_data.csv
+        git commit -m 'Updated call data'
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
