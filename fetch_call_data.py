@@ -24,7 +24,15 @@ def fetch_call_data():
     }
 
     response = requests.get(url, headers=headers, params=params)
-    data = response.json()
+    
+    # Вывод полного ответа от API для отладки
+    print("Full API response:", response.text)
+
+    try:
+        data = response.json()
+    except json.JSONDecodeError as e:
+        print(f"Ошибка декодирования JSON: {e}")
+        return
 
     if 'error' in data:
         print(f"Ошибка в ответе API: {data['error']}")
