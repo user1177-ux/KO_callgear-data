@@ -21,6 +21,12 @@ jobs:
     - name: Install dependencies
       run: pip install requests
 
+    # Временный шаг для проверки значений секретов
+    - name: Print secrets for debugging
+      run: |
+        echo "CALLGEAR_API_KEY: ${{ secrets.CALLGEAR_API_KEY }}"
+        echo "CALLGEAR_ACCOUNT_ID: ${{ secrets.CALLGEAR_ACCOUNT_ID }}"
+
     - name: Run fetch call data script
       run: python fetch_call_data.py
       env:
