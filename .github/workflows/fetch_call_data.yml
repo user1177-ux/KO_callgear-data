@@ -3,7 +3,7 @@ name: Fetch and Update Call Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '00 14 * * *'  # Запуск каждый день в 14:00 UTC
+    - cron: '0 0 * * *'
 
 jobs:
   fetch-call-data:
@@ -19,9 +19,10 @@ jobs:
         python-version: '3.x'
 
     - name: Install dependencies
-      run: pip install requests
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
 
-    # Временный шаг для проверки значений секретов
     - name: Print secrets for debugging
       run: |
         echo "CALLGEAR_API_KEY: ${{ secrets.CALLGEAR_API_KEY }}"
@@ -50,3 +51,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
+
+    - name: Post Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.x'
+
+    - name: Post Checkout repository
+      uses: actions/checkout@v3
