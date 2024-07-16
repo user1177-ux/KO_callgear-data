@@ -24,19 +24,23 @@ def fetch_call_data():
         'group': 'day'
     }
 
+    print(f"Отправка запроса на {url} с параметрами {params}")
+
     response = requests.get(url, headers=headers, params=params)
     
+    print(f"Код состояния ответа: {response.status_code}")
+    print(f"Тело ответа: {response.text}")
+
     # Добавим проверку кода состояния
     if response.status_code != 200:
         print(f"Ошибка HTTP: {response.status_code}")
-        print(f"Ответ сервера: {response.text}")
         return
     
     try:
         data = response.json()
+        print(f"Декодированные данные: {data}")
     except requests.exceptions.JSONDecodeError as e:
         print(f"Ошибка декодирования JSON: {e}")
-        print(f"Ответ сервера: {response.text}")
         return
 
     if 'error' in data:
