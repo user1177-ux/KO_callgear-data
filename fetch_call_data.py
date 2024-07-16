@@ -8,7 +8,7 @@ def fetch_call_data():
     account_id = os.getenv('CALLGEAR_ACCOUNT_ID')
 
     if not access_token or not account_id:
-        print("ACCESS_TOKEN or ACCOUNT_ID not set")
+        print("ACCESS_TOKEN или ACCOUNT_ID не установлены")
         return
 
     url = f'https://api.callgear.com/api/v2/calls'
@@ -17,20 +17,20 @@ def fetch_call_data():
         'Content-Type': 'application/json'
     }
     params = {
-        'date_from': '2020-01-01T00:00:00Z',  # Set to a past date to get all data
-        'date_to': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),  # Current date
+        'date_from': '2020-01-01T00:00:00Z',  # Установить на прошлую дату для получения всех данных
+        'date_to': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),  # Текущая дата
         'account_id': account_id,
         'fields': 'call_id,call_date_time,call_type,call_status'
     }
 
     response = requests.get(url, headers=headers, params=params)
     if response.status_code != 200:
-        print(f"Error fetching data: {response.text}")
+        print(f"Ошибка при получении данных: {response.text}")
         return
 
     data = response.json()
     if 'data' not in data:
-        print("No data found")
+        print("Данные не найдены")
         return
 
     calls = data['data']
