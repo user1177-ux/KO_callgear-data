@@ -1,6 +1,7 @@
 import requests
 import csv
 import os
+from datetime import datetime
 
 def fetch_call_data():
     api_key = os.getenv('CALLGEAR_API_KEY')
@@ -18,7 +19,7 @@ def fetch_call_data():
     
     data = {
         "dateFrom": "2000-01-01",  # начальная дата
-        "dateTo": "2100-01-01"     # конечная дата
+        "dateTo": datetime.now().strftime('%Y-%m-%d')  # сегодняшняя дата
     }
     
     response = requests.post(url, headers=headers, json=data)
