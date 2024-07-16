@@ -3,7 +3,7 @@ name: Fetch and Update Call Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'  # Запуск каждый день в 00:00 UTC
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
 
 jobs:
   fetch-call-data:
@@ -26,7 +26,7 @@ jobs:
     - name: Run fetch call data script
       run: python fetch_call_data.py
       env:
-        CALLGEAR_API_KEY: ${{ secrets.CALLGEAR_API_KEY }}
+        CALLGEAR_ACCESS_TOKEN: ${{ secrets.CALLGEAR_ACCESS_TOKEN }}
         CALLGEAR_ACCOUNT_ID: ${{ secrets.CALLGEAR_ACCOUNT_ID }}
 
     - name: Check if CSV file exists and is not empty
@@ -45,3 +45,4 @@ jobs:
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
