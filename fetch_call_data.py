@@ -4,71 +4,59 @@ import os
 from datetime import datetime
 
 def fetch_call_data():
-    api_key = os.getenv('CALLGEAR_API_KEY')
+    access_token = os.getenv('CALLGEAR_ACCESS_TOKEN')
     account_id = os.getenv('CALLGEAR_ACCOUNT_ID')
 
-    if not api_key or not account_id:
-        print("API key or Account ID not set")
+    if not access_token or not account_id:
+        print("ACCESS_TOKEN or ACCOUNT_ID not set")
         return
 
-    url = f'https://api.callgear.com/v1/accounts/{account_id}/calls/search'
+    url = f'https://api.callgear.com/api/v2/calls'
     headers = {
-        'Authorization': f'Bearer {api_key}',
+        'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json'
     }
-    
-    data = {
-        "dateFrom": "2000-01-01",  # начальная дата
-        "dateTo": datetime.now().strftime('%Y-%m-%d')  # сегодняшняя дата
+    params = {
+        'date_from': '2020-01-01T00:00:00Z',  # Set to a past date to get all data
+        'date_to': datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ'),  # Current date
+        'account_id': account_id,
+        'fields': 'call_id,call_date_time,call_type,call_status'
     }
-    
-    response = requests.post(url, headers=headers, json=data)
 
+    response = requests.get(url, headers=headers, params=params)
     if response.status_code != 200:
-        print(f"Error fetching data: {response.status_code} - {response.text}")
+        print(f"Error fetching data: {response.text}")
         return
 
-    try:
-        call_data = response.json()
-    except Exception as e:
-        print(f"Error decoding JSON: {str(e)}")
+    data = response.json()
+    if 'data' not in data:
+        print("No data found")
         return
 
-    if 'items' not in call_data:
-        print(f"Unexpected data format: {call_data}")
-        return
-
-    print(f"Fetched {len(call_data['items'])} call records")
-
-    calls = call_data['items']
-
-    # Подсчет необходимых данных
-    call_stats = {}
+    calls = data['data']
+    result = []
     for call in calls:
-        date = call['date'].split('T')[0]
-        if date not in call_stats:
-            call_stats[date] = {'incoming': 0, 'missed': 0, 'answered': 0}
-        call_stats[date]['incoming'] += 1
-        if call['status'] == 'missed':
-            call_stats[date]['missed'] += 1
-        else:
-            call_stats[date]['answered'] += 1
+        result.append({
+            'Дата': call['call_date_time'],
+            'Тип': call['call_type'],
+            'Статус': call['call_status']
+        })
 
-    # Запись данных в CSV файл
-    file_path = 'call_data.csv'
-    with open(file_path, 'w', newline='') as csvfile:
+    incoming_calls = len([call for call in result if call['Тип'] == 'incoming'])
+    missed_calls = len([call for call in result if call['Статус'] == 'missed'])
+    answered_calls = incoming_calls - missed_calls
+
+    with open('call_data.csv', 'w', newline='') as csvfile:
         fieldnames = ['Дата', 'Кол-во входящих звонков', 'Кол-во пропущенных звонков', 'Кол-во принятых звонков']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for date, stats in sorted(call_stats.items()):
-            writer.writerow({
-                'Дата': date,
-                'Кол-во входящих звонков': stats['incoming'],
-                'Кол-во пропущенных звонков': stats['missed'],
-                'Кол-во принятых звонков': stats['answered']
-            })
-
-    print(f"Data successfully exported to {file_path}")
+        writer.writerow({
+            'Дата': datetime.now().strftime('%Y-%m-%d'),
+            'Кол-во входящих звонков': incoming_calls,
+            'Кол-во пропущенных звонков': missed_calls,
+            'Кол-во принятых звонков': answered_calls
+        })
+    print("Данные успешно экспортированы в call_data.csv")
 
 if __name__ == "__main__":
     fetch_call_data()
